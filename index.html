@@ -263,14 +263,15 @@
     .btn-admin { background: #2a1a22; border-color: #ffd700; color: #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.1); }
     .btn-admin:hover { background: #3a2a32; border-color: #ff69b4; color: #ff69b4; }
 
+    /* ===== MODAL CON LOGO ===== */
     .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(10px);
+      background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(12px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -280,16 +281,32 @@
     .modal-overlay.hidden { display: none; }
     .modal-card {
       background: #1a0a0f;
-      max-width: 460px;
+      max-width: 480px;
       width: 100%;
       padding: 2.5rem 2rem;
       border-radius: 32px;
       border: 2px solid #ffd700;
-      box-shadow: 0 0 60px rgba(255,215,0,0.15);
+      box-shadow: 0 0 80px rgba(255,215,0,0.12);
       text-align: center;
     }
-    .modal-card h2 { color: #ffd700; border-left: none; margin-bottom: 0.5rem; }
-    .modal-card p { color: #d0b0b0; margin-bottom: 1.5rem; }
+    .modal-card .modal-logo {
+      width: 100%;
+      max-width: 200px;
+      height: auto;
+      margin-bottom: 1rem;
+      filter: drop-shadow(0 0 20px rgba(255,105,180,0.2));
+    }
+    .modal-card h2 {
+      color: #ffd700;
+      border-left: none;
+      margin-bottom: 0.5rem;
+      font-size: 1.8rem;
+    }
+    .modal-card p {
+      color: #d0b0b0;
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
     .modal-card input {
       width: 100%;
       padding: 0.8rem 1.2rem;
@@ -301,11 +318,26 @@
       margin-bottom: 1.5rem;
       outline: none;
       transition: border 0.3s;
+      text-align: center;
     }
     .modal-card input:focus { border-color: #ff69b4; }
-    .modal-card .btn { width: 100%; justify-content: center; padding: 0.8rem; font-size: 1rem; }
-    .modal-card .btn-primary { background: #ffd700; border-color: #ffd700; color: #0d0d0d; }
-    .modal-card .btn-primary:hover { background: #ffed4a; border-color: #ffed4a; box-shadow: 0 0 30px rgba(255,215,0,0.4); }
+    .modal-card .btn {
+      width: 100%;
+      justify-content: center;
+      padding: 0.8rem;
+      font-size: 1rem;
+    }
+    .modal-card .btn-primary {
+      background: #ffd700;
+      border-color: #ffd700;
+      color: #0d0d0d;
+      font-weight: 800;
+    }
+    .modal-card .btn-primary:hover {
+      background: #ffed4a;
+      border-color: #ffed4a;
+      box-shadow: 0 0 30px rgba(255,215,0,0.4);
+    }
 
     .toast-container {
       position: fixed;
@@ -382,7 +414,6 @@
     }
     .admin-toggle-btn:hover { background: #3a2a32; border-color: #ff69b4; color: #ff69b4; transform: scale(1.05); }
 
-    /* Logo principal a pantalla completa */
     .hero-logo {
       display: flex;
       justify-content: center;
@@ -415,12 +446,14 @@
       .user-greeting { font-size: 0.85rem; }
       .qr-box canvas, .qr-box img { width: 140px; height: 140px; }
       .hero-logo img { max-height: 140px; }
+      .modal-card .modal-logo { max-width: 140px; }
     }
     @media (max-width: 480px) {
       h1 { font-size: 1.6rem; }
       .header-logo { height: 2.8rem; }
       .toast { padding: 0.8rem; flex-wrap: wrap; }
       .hero-logo img { max-height: 100px; }
+      .modal-card .modal-logo { max-width: 110px; }
     }
     .text-center { text-align: center; }
     .mt-1 { margin-top: 0.5rem; }
@@ -435,9 +468,10 @@
 
   <div id="three-canvas"></div>
 
+  <!-- ===== MODAL SIEMPRE VISIBLE AL INICIO ===== -->
   <div class="modal-overlay" id="nameModal">
     <div class="modal-card">
-      <div style="font-size:3rem; margin-bottom:0.5rem;">🎂</div>
+      <img src="https://raw.githubusercontent.com/pintosingenieria-max/dj-michael/main/principal.png" alt="DJ Michael Logo" class="modal-logo" />
       <h2>¡Bienvenido a la fiesta!</h2>
       <p>Ingresa tu nombre para participar en la votación y pedir tus canciones favoritas.</p>
       <input type="text" id="userNameInput" placeholder="Tu nombre..." maxlength="30" autofocus />
@@ -751,25 +785,40 @@
       const refreshQrBtn = document.getElementById('refreshQrBtn');
 
       // ============================================================
-      // 6. GESTIÓN DE NOMBRE
+      // 6. GESTIÓN DE NOMBRE – SIEMPRE MODAL VISIBLE
       // ============================================================
       function getUserName() { return localStorage.getItem('userName') || null; }
       function setUserName(name) { localStorage.setItem('userName', name); }
       function showGreeting(name) { greetingUser.textContent = `👤 Hola, ${name}`; }
       function hideModal() { modal.classList.add('hidden'); }
 
+      // Precargar el nombre si ya existe
+      const storedName = getUserName();
+      if (storedName) {
+        userNameInput.value = storedName;
+        // Mostramos el saludo de inmediato, pero el modal sigue visible
+        showGreeting(storedName);
+      } else {
+        // Si no hay nombre, el saludo sigue siendo "invitado"
+        greetingUser.textContent = '👤 Hola, invitado';
+      }
+
+      // El modal siempre está visible al cargar (no se oculta automáticamente)
+      // Lo forzamos a estar visible (por si acaso)
+      modal.classList.remove('hidden');
+
       function handleNameSubmit() {
         const name = userNameInput.value.trim();
-        if (!name) { alert('Por favor, ingresá tu nombre.'); return; }
+        if (!name) {
+          alert('Por favor, ingresá tu nombre.');
+          return;
+        }
         setUserName(name);
         showGreeting(name);
         hideModal();
         updateWhatsAppLinks();
+        // Enfocar el contenido principal (opcional)
       }
-
-      const storedName = getUserName();
-      if (storedName) { showGreeting(storedName); hideModal(); }
-      else { modal.classList.remove('hidden'); userNameInput.focus(); }
 
       saveNameBtn.addEventListener('click', handleNameSubmit);
       userNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleNameSubmit(); });
@@ -970,7 +1019,7 @@
       loadVotesFromFirebase();
       updateWhatsAppLinks();
       adminSection.classList.add('hidden');
-      console.log('🎂 Página de votación con fondo 3D y estilos actualizados');
+      console.log('🎂 Página de votación con modal siempre visible y logo');
     })();
   </script>
 </body>

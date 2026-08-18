@@ -269,6 +269,7 @@
     .btn-admin { background: #2a1a22; border-color: #ffd700; color: #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.1); }
     .btn-admin:hover { background: #3a2a32; border-color: #ff69b4; color: #ff69b4; }
 
+    /* ===== MODAL DE NOMBRE ===== */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -342,6 +343,51 @@
       background: #ffed4a;
       border-color: #ffed4a;
       box-shadow: 0 0 30px rgba(255,215,0,0.4);
+    }
+
+    /* ===== MODAL DE EXPLOSIÓN (EASTER EGG) ===== */
+    .explosion-modal .modal-card {
+      border-color: #ff1493;
+      box-shadow: 0 0 100px rgba(255,20,147,0.4);
+      animation: explode-pulse 0.8s ease-in-out infinite alternate;
+    }
+    @keyframes explode-pulse {
+      0% { transform: scale(1); box-shadow: 0 0 60px rgba(255,20,147,0.3); }
+      100% { transform: scale(1.02); box-shadow: 0 0 120px rgba(255,20,147,0.7); }
+    }
+    .explosion-modal .modal-card h2 {
+      color: #ff1493;
+      font-size: 2.2rem;
+    }
+    .explosion-modal .modal-card .btn-primary {
+      background: #ff1493;
+      border-color: #ff1493;
+      color: #fff;
+    }
+    .explosion-modal .modal-card .btn-primary:hover {
+      background: #ff69b4;
+      border-color: #ff69b4;
+    }
+    .confetti-rain {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9998;
+      overflow: hidden;
+    }
+    .confetti-rain span {
+      position: absolute;
+      top: -10px;
+      display: block;
+      font-size: 2rem;
+      animation: confetti-fall linear infinite;
+    }
+    @keyframes confetti-fall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
     }
 
     .toast-container {
@@ -473,7 +519,7 @@
 
   <div id="three-canvas"></div>
 
-  <!-- ===== MODAL SIEMPRE VISIBLE AL INICIO ===== -->
+  <!-- ===== MODAL DE NOMBRE ===== -->
   <div class="modal-overlay" id="nameModal">
     <div class="modal-card">
       <img src="https://raw.githubusercontent.com/pintosingenieria-max/dj-michael/main/principal.png" alt="DJ Michael Logo" class="modal-logo" />
@@ -484,9 +530,26 @@
     </div>
   </div>
 
+  <!-- ===== MODAL DE EXPLOSIÓN (EASTER EGG) ===== -->
+  <div class="modal-overlay hidden explosion-modal" id="explosionModal">
+    <div class="modal-card">
+      <div style="font-size:4rem; margin-bottom:0.5rem;">💥</div>
+      <h2>¡Has interactuado demasiado con el DJ!</h2>
+      <p style="font-size:1.2rem; color:#ffb6c1;">
+        🤖 El DJ se ha enfadado por tantos clics.<br>
+        <span style="font-size:2rem;">🎧💢</span>
+      </p>
+      <p style="color:#d0b0b0; margin-bottom:1rem;">
+        Has pulsado más de 10 veces en la votación. <br>
+        <span style="color:#ff1493;">¡Ahora tendrás que esperar un poco!</span>
+      </p>
+      <button class="btn btn-primary" id="closeExplosionBtn">🙈 ¡Lo siento, DJ!</button>
+    </div>
+  </div>
+
+  <!-- ===== CONTENIDO PRINCIPAL ===== -->
   <div class="content" id="mainContent">
 
-    <!-- LOGO PRINCIPAL A PANTALLA COMPLETA -->
     <div class="hero-logo">
       <img src="https://raw.githubusercontent.com/pintosingenieria-max/dj-michael/main/principal.png" alt="DJ Michael Logo" />
     </div>
@@ -506,7 +569,6 @@
       <h2><span class="neon-cyan">🎵</span> Elige la música para la fiesta</h2>
       <p style="color:#c8b8b8; margin-bottom:1.2rem;">Vota por el estilo que más te guste. ¡La música la ponemos todos!</p>
       <div id="pollContainer" class="poll-grid"></div>
-      <!-- Ya no hay botón de reinicio aquí -->
     </section>
 
     <section class="card" id="servicesSection">
@@ -540,7 +602,6 @@
           <div class="btn-group">
             <button class="btn btn-admin btn-sm" id="copyUrlBtn">📋 Copiar enlace</button>
             <button class="btn btn-admin btn-sm" id="refreshQrBtn">🔄 Regenerar QR</button>
-            <!-- Botón de reinicio solo para admin -->
             <button class="btn btn-admin btn-sm" id="resetAllBtnAdmin">🔄 Reiniciar todos los votos</button>
           </div>
           <span style="font-size:0.75rem; color:#8a6a7a;">Escanea el código para acceder desde tu celular</span>
@@ -553,6 +614,7 @@
     </div>
   </div>
 
+  <!-- ===== TOAST ===== -->
   <div class="toast-container" id="toastContainer">
     <div class="toast" id="toast">
       <div class="toast-icon">🎧</div>
@@ -573,7 +635,7 @@
       'use strict';
 
       // ============================================================
-      // 0. THREE.JS FONDO 3D DE FIESTA (sin cambios)
+      // 0. THREE.JS FONDO 3D (sin cambios)
       // ============================================================
       (function initThree() {
         const container = document.getElementById('three-canvas');
@@ -754,7 +816,7 @@
       const WHATSAPP_MESSAGE_SONG = 'Hola DJ Michael, soy ';
 
       // ============================================================
-      // 3. ESTILOS (SOLO LOS 4 RESTANTES, SIN ICONOS)
+      // 3. ESTILOS (4 estilos, sin iconos)
       // ============================================================
       const STYLES = [
         { id: 'r1', label: 'Reggaeton' },
@@ -767,9 +829,11 @@
       // 4. ESTADO LOCAL
       // ============================================================
       let pollData = STYLES.map(s => ({ id: s.id, label: s.label, votes: 0 }));
-      let userVotes = {};
+      let userVotes = {};              // votos reales por estilo (solo uno por estilo)
+      let clickCount = 0;              // contador de intentos de votar (total)
+      const MAX_CLICKS = 10;           // límite para activar el easter egg
+      let explosionTriggered = false;  // para no repetir la explosión
       let adminVisible = false;
-      let cooldownInterval = null;
 
       // ============================================================
       // 5. DOM REFS
@@ -790,6 +854,8 @@
       const currentUrlDisplay = document.getElementById('currentUrlDisplay');
       const copyUrlBtn = document.getElementById('copyUrlBtn');
       const refreshQrBtn = document.getElementById('refreshQrBtn');
+      const explosionModal = document.getElementById('explosionModal');
+      const closeExplosionBtn = document.getElementById('closeExplosionBtn');
 
       // ============================================================
       // 6. GESTIÓN DE NOMBRE – SIEMPRE MODAL VISIBLE
@@ -806,7 +872,6 @@
       } else {
         greetingUser.textContent = '👤 Hola, invitado';
       }
-
       modal.classList.remove('hidden');
 
       function handleNameSubmit() {
@@ -825,65 +890,18 @@
       userNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleNameSubmit(); });
 
       // ============================================================
-      // 7. COOLDOWN (1 minuto)
-      // ============================================================
-      const COOLDOWN_SECONDS = 60;
-
-      function getLastVoteTime() {
-        const val = localStorage.getItem('lastVoteTimestamp');
-        return val ? parseInt(val) : 0;
-      }
-
-      function setLastVoteTime() {
-        localStorage.setItem('lastVoteTimestamp', Date.now());
-      }
-
-      function clearLastVoteTime() {
-        localStorage.removeItem('lastVoteTimestamp');
-      }
-
-      function isInCooldown() {
-        const last = getLastVoteTime();
-        if (!last) return false;
-        const elapsed = (Date.now() - last) / 1000;
-        return elapsed < COOLDOWN_SECONDS;
-      }
-
-      function getRemainingCooldown() {
-        const last = getLastVoteTime();
-        if (!last) return 0;
-        const elapsed = (Date.now() - last) / 1000;
-        return Math.max(0, COOLDOWN_SECONDS - elapsed);
-      }
-
-      // ============================================================
-      // 8. VOTACIÓN
+      // 7. VOTACIÓN (sin cooldown, con contador de clics)
       // ============================================================
       function renderPoll() {
         const totalVotes = pollData.reduce((acc, p) => acc + p.votes, 0);
-        const inCooldown = isInCooldown();
-        const remaining = getRemainingCooldown();
-
         let html = '';
         const sorted = [...pollData].sort((a, b) => b.votes - a.votes);
         sorted.forEach(p => {
           const percent = totalVotes === 0 ? 0 : Math.round((p.votes / totalVotes) * 100);
           const voted = userVotes[p.id] || false;
-          // Determinar estado del botón de votar
-          let disabled = false;
-          let btnText = '';
-          if (voted) {
-            disabled = true;
-            btnText = '✅ Votado';
-          } else if (inCooldown) {
-            disabled = true;
-            btnText = `⏳ ${Math.ceil(remaining)}s`;
-          } else {
-            disabled = false;
-            btnText = '👍 Votar';
-          }
+          const disabled = voted || explosionTriggered;
+          const btnText = voted ? '✅ Votado' : (explosionTriggered ? '🚫 Bloqueado' : '👍 Votar');
 
-          // Botón de reset solo visible en modo admin
           const resetBtnHtml = adminVisible ? `<button class="btn btn-outline btn-sm reset-btn" data-id="${p.id}">↺ Reset</button>` : '';
 
           html += `
@@ -896,7 +914,7 @@
                 <div class="poll-bar-fill" style="width: ${percent}%;"></div>
               </div>
               <div class="poll-actions">
-                <button class="btn btn-primary btn-sm vote-btn ${voted ? '' : 'vote-available'}" data-id="${p.id}" ${disabled ? 'disabled' : ''}>
+                <button class="btn btn-primary btn-sm vote-btn" data-id="${p.id}" ${disabled ? 'disabled' : ''}>
                   ${btnText}
                 </button>
                 ${resetBtnHtml}
@@ -906,13 +924,15 @@
         });
         pollContainer.innerHTML = html;
 
-        // Eventos de votar
-        pollContainer.querySelectorAll('.vote-btn:not([disabled])').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            votePoll(id);
+        // Eventos de votar (solo si no está bloqueado por explosión)
+        if (!explosionTriggered) {
+          pollContainer.querySelectorAll('.vote-btn:not([disabled])').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+              const id = this.dataset.id;
+              handleVoteClick(id);
+            });
           });
-        });
+        }
 
         // Eventos de reset (solo admin)
         if (adminVisible) {
@@ -925,32 +945,101 @@
         }
       }
 
-      // Actualizar cronómetro en los botones disponibles
-      function updateCooldownButtons() {
-        const inCooldown = isInCooldown();
-        const remaining = getRemainingCooldown();
-        const voteAvailable = document.querySelectorAll('.vote-available');
+      // Función que maneja el clic en votar (incrementa contador y ejecuta voto si es posible)
+      function handleVoteClick(id) {
+        // Incrementar contador de clics
+        clickCount++;
+        console.log(`Clics: ${clickCount}`);
 
-        if (!inCooldown) {
-          // Si ya pasó el cooldown, limpiamos el timestamp y habilitamos todos los botones disponibles
-          if (getLastVoteTime() !== 0) {
-            clearLastVoteTime();
-          }
-          voteAvailable.forEach(btn => {
-            btn.disabled = false;
-            btn.textContent = '👍 Votar';
-          });
+        // Si se supera el límite, activar explosión
+        if (clickCount >= MAX_CLICKS && !explosionTriggered) {
+          triggerExplosion();
+          return; // No se ejecuta el voto
+        }
+
+        // Si ya explotó, no permitir más votos (ya está deshabilitado)
+        if (explosionTriggered) {
           return;
         }
 
-        // En cooldown: deshabilitar y mostrar tiempo
-        const seconds = Math.ceil(remaining);
-        voteAvailable.forEach(btn => {
-          btn.disabled = true;
-          btn.textContent = `⏳ ${seconds}s`;
-        });
+        // Ejecutar voto normal
+        const item = pollData.find(p => p.id === id);
+        if (!item) return;
+        if (userVotes[id]) {
+          showToast('⚠️', 'Ya votaste', 'Solo puedes votar una vez por estilo.');
+          return;
+        }
+
+        // Registrar voto
+        item.votes += 1;
+        userVotes[id] = true;
+        renderPoll();
+        showToast('🎧', '¡Voto registrado!', 'El DJ analizará la preferencia.');
+
+        // Guardar en Firebase
+        const nombre = getUserName() || 'Anónimo';
+        const estilo = item.label;
+        const voto = { nombre, estilo, timestamp: Date.now() };
+        fetch(FIREBASE_URL + VOTOS_PATH, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(voto)
+        }).catch(err => console.error('Error al guardar en Firebase:', err));
       }
 
+      // ============================================================
+      // 8. EXPLOSIÓN (EASTER EGG)
+      // ============================================================
+      function triggerExplosion() {
+        if (explosionTriggered) return;
+        explosionTriggered = true;
+        // Mostrar modal de explosión
+        explosionModal.classList.remove('hidden');
+        // Lanzar confeti (emojis volando)
+        launchConfetti();
+        // Bloquear todos los botones de voto (se actualiza en renderPoll)
+        renderPoll();
+        showToast('💥', '¡Has sido detectado!', 'Has pulsado más de 10 veces. El DJ se ha enfadado.');
+      }
+
+      function launchConfetti() {
+        // Crear contenedor de confeti si no existe
+        let container = document.querySelector('.confetti-rain');
+        if (!container) {
+          container = document.createElement('div');
+          container.className = 'confetti-rain';
+          document.body.appendChild(container);
+        }
+        // Limpiar confeti anterior
+        container.innerHTML = '';
+        const emojis = ['🎉', '🎊', '✨', '💥', '🎧', '🔥', '🎵', '🎶', '💃', '🕺', '🎂', '🥳'];
+        for (let i = 0; i < 60; i++) {
+          const span = document.createElement('span');
+          span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          span.style.left = Math.random() * 100 + '%';
+          span.style.fontSize = (1.5 + Math.random() * 2.5) + 'rem';
+          span.style.animationDuration = (2 + Math.random() * 3) + 's';
+          span.style.animationDelay = (Math.random() * 2) + 's';
+          container.appendChild(span);
+        }
+        // Auto-eliminar confeti después de 6 segundos
+        setTimeout(() => {
+          if (container) container.innerHTML = '';
+        }, 6000);
+      }
+
+      // Cerrar modal de explosión
+      closeExplosionBtn.addEventListener('click', function() {
+        explosionModal.classList.add('hidden');
+        // No re-habilitamos los votos, queda bloqueado para siempre (o hasta reiniciar)
+        // Podríamos dejarlo así como castigo
+        showToast('🙈', '¡Perdonado!', 'Pero no podrás votar más en esta sesión.');
+        renderPoll();
+      });
+
+      // ============================================================
+      // 9. CARGA DE VOTOS DESDE FIREBASE
+      // ============================================================
       async function loadVotesFromFirebase() {
         try {
           const res = await fetch(FIREBASE_URL + VOTOS_PATH);
@@ -971,38 +1060,9 @@
         }
       }
 
-      function votePoll(id) {
-        // Verificar cooldown
-        if (isInCooldown()) {
-          const remaining = Math.ceil(getRemainingCooldown());
-          showToast('⏳', 'Espera un momento', `Debes esperar ${remaining} segundos antes de votar de nuevo.`);
-          return;
-        }
-
-        const item = pollData.find(p => p.id === id);
-        if (!item) return;
-        if (userVotes[id]) {
-          showToast('⚠️', 'Ya votaste', 'Solo puedes votar una vez por estilo.');
-          return;
-        }
-
-        // Registrar voto
-        item.votes += 1;
-        userVotes[id] = true;
-        setLastVoteTime(); // Iniciar cooldown
-        renderPoll();
-        showToast('🎧', '¡Voto registrado!', 'El DJ analizará la preferencia. Espera 1 minuto para volver a votar.');
-
-        const nombre = getUserName() || 'Anónimo';
-        const estilo = item.label;
-        const voto = { nombre, estilo, timestamp: Date.now() };
-        fetch(FIREBASE_URL + VOTOS_PATH, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(voto)
-        }).catch(err => console.error('Error al guardar en Firebase:', err));
-      }
-
+      // ============================================================
+      // 10. RESET (solo admin)
+      // ============================================================
       function resetPollItem(id) {
         const item = pollData.find(p => p.id === id);
         if (item) {
@@ -1016,13 +1076,17 @@
         if (confirm('¿Reiniciar todos los votos a cero? (solo local)')) {
           pollData.forEach(p => p.votes = 0);
           userVotes = {};
+          // También reiniciamos el contador de clics y la explosión
+          clickCount = 0;
+          explosionTriggered = false;
+          explosionModal.classList.add('hidden');
           renderPoll();
-          showToast('🔄', 'Todos los votos reiniciados', 'Reinicio local completo.');
+          showToast('🔄', 'Todos los votos reiniciados', 'Reinicio local completo. El contador de clics también se reinició.');
         }
       }
 
       // ============================================================
-      // 9. TOAST
+      // 11. TOAST
       // ============================================================
       let toastTimeout = null;
       function showToast(icon, title, message) {
@@ -1042,7 +1106,7 @@
       });
 
       // ============================================================
-      // 10. WHATSAPP
+      // 12. WHATSAPP
       // ============================================================
       function buildWhatsAppUrl(number, message) {
         return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
@@ -1055,7 +1119,7 @@
       }
 
       // ============================================================
-      // 11. ADMIN / QR
+      // 13. ADMIN / QR
       // ============================================================
       function renderQR() {
         const url = window.location.href;
@@ -1074,14 +1138,14 @@
         adminToggleBtn.textContent = adminVisible ? '🔓 Cerrar Admin' : '🔒 Admin';
         if (adminVisible) {
           renderQR();
-          renderPoll(); // Mostrar botones de reset
+          renderPoll();
         } else {
-          renderPoll(); // Ocultar botones de reset
+          renderPoll();
         }
       }
 
       // ============================================================
-      // 12. UTILIDADES
+      // 14. UTILIDADES
       // ============================================================
       function escapeHtml(text) {
         if (!text) return '';
@@ -1104,7 +1168,7 @@
       }
 
       // ============================================================
-      // 13. EVENTOS
+      // 15. EVENTOS
       // ============================================================
       resetAllBtnAdmin.addEventListener('click', resetAllVotes);
       adminToggleBtn.addEventListener('click', toggleAdmin);
@@ -1112,16 +1176,13 @@
       refreshQrBtn.addEventListener('click', renderQR);
 
       // ============================================================
-      // 14. INICIO
+      // 16. INICIO
       // ============================================================
       loadVotesFromFirebase();
       updateWhatsAppLinks();
       adminSection.classList.add('hidden');
 
-      // Iniciar el intervalo del cronómetro (cada segundo)
-      cooldownInterval = setInterval(updateCooldownButtons, 1000);
-
-      console.log('🎂 Página de votación con cooldown de 1 minuto y botones de reset solo para admin');
+      console.log('🎂 Página de votación sin cooldown, con easter egg de 10 clics');
     })();
   </script>
 </body>

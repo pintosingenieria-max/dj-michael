@@ -2,26 +2,33 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DJ Panel – Michael</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>DJ Michael – 15 años | Votación</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
+    /* ===== RESET & BASE ===== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       background: #0d0d0d;
       color: #f0e6e6;
       font-family: 'Inter', sans-serif;
+      line-height: 1.6;
       padding: 1.5rem;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       background-image: radial-gradient(circle at 10% 30%, #1a0a0f 0%, #0d0d0d 80%);
     }
-    .container { max-width: 1400px; margin: 0 auto; }
+    .container { max-width: 1200px; width: 100%; margin: 0 auto; }
     .neon-text { color: #f7c2d9; text-shadow: 0 0 12px #f7c2d9, 0 0 30px #ff69b4, 0 0 60px #ff1493; }
     .gold-text { color: #ffd700; text-shadow: 0 0 10px #ffd700, 0 0 25px #ff8c00; }
-    h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em; }
-    h2 { font-size: 1.6rem; border-left: 4px solid #ff69b4; padding-left: 0.75rem; margin-bottom: 1.5rem; font-weight: 700; color: #ffd700; }
+    .neon-cyan { color: #ffb6c1; text-shadow: 0 0 8px #ffb6c1, 0 0 20px #ff69b4; }
+    h1 { font-size: 2.8rem; font-weight: 800; letter-spacing: -0.02em; }
+    h2 { font-size: 1.8rem; border-left: 4px solid #ff69b4; padding-left: 0.75rem; margin-bottom: 1.5rem; font-weight: 700; color: #ffd700; }
     .header {
       display: flex;
       justify-content: space-between;
@@ -30,11 +37,29 @@
       gap: 1rem;
       padding: 0.5rem 0 1.5rem 0;
       border-bottom: 2px solid #ff69b4;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
     }
     .header-left { display: flex; align-items: center; gap: 0.75rem; }
-    .logo-icon { font-size: 2.5rem; }
-    .badge { background: #1a0a0f; padding: 0.4rem 1.2rem; border-radius: 40px; border: 1.5px solid #ffd700; font-size: 0.8rem; font-weight: 700; color: #ffd700; }
+    .logo-icon { font-size: 2.8rem; line-height: 1; }
+    .header-badge {
+      background: #1a0a0f;
+      padding: 0.4rem 1.2rem;
+      border-radius: 40px;
+      border: 1.5px solid #ffd700;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #ffd700;
+      box-shadow: 0 0 15px rgba(255,215,0,0.2);
+    }
+    .user-greeting {
+      color: #ffb6c1;
+      font-size: 1rem;
+      font-weight: 600;
+      background: rgba(255,105,180,0.1);
+      padding: 0.3rem 1.2rem;
+      border-radius: 40px;
+      border: 1px solid #ff69b4;
+    }
     .card {
       background: rgba(20,10,15,0.85);
       backdrop-filter: blur(4px);
@@ -44,39 +69,62 @@
       border: 1px solid #3a1a2a;
       box-shadow: 0 8px 40px rgba(255,105,180,0.15);
       border-top: 3px solid #ffd700;
+      transition: opacity 0.3s, transform 0.3s;
     }
-    .stats-grid {
+    .card-hidden { display: none; }
+    .poll-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1.2rem;
     }
-    .stat-item {
-      background: rgba(30,15,22,0.6);
-      border-radius: 16px;
-      padding: 1rem;
-      text-align: center;
+    .poll-item {
+      background: rgba(30,15,22,0.7);
+      backdrop-filter: blur(2px);
+      border-radius: 20px;
+      padding: 1rem 1.2rem;
       border: 1px solid #4a2a3a;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
     }
-    .stat-item .label { font-size: 0.9rem; color: #d0b0b0; }
-    .stat-item .count { font-size: 2rem; font-weight: 700; color: #ffd700; }
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-    thead { background: #2a1a22; color: #ffd700; }
-    th, td { padding: 0.7rem 1rem; text-align: left; border-bottom: 1px solid #2a1a22; }
-    tr:hover { background: rgba(255,105,180,0.05); }
-    .badge-style { display: inline-block; background: #4a2a3a; padding: 0.2rem 0.8rem; border-radius: 40px; font-size: 0.8rem; }
-    .empty-msg { color: #6a4a5a; text-align: center; padding: 2rem 0; font-style: italic; }
-    .refresh-info {
+    .poll-item:hover { border-color: #ff69b4; box-shadow: 0 0 25px rgba(255,105,180,0.2); }
+    .poll-label {
       display: flex;
       justify-content: space-between;
+      font-weight: 600;
+      font-size: 0.95rem;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      color: #8a6a7a;
-      font-size: 0.85rem;
-      margin-bottom: 1rem;
     }
+    .poll-label span:first-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 65%;
+      color: #f7e0e0;
+    }
+    .poll-percent { font-weight: 700; color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,0.3); }
+    .poll-bar-bg {
+      width: 100%;
+      height: 12px;
+      background: #2a1a22;
+      border-radius: 40px;
+      overflow: hidden;
+    }
+    .poll-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 40px;
+      transition: width 0.4s ease;
+      background: linear-gradient(90deg, #ff69b4, #ff1493, #ffd700);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite alternate;
+    }
+    @keyframes shimmer {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 100% 0%; }
+    }
+    .poll-actions { display: flex; gap: 0.6rem; margin-top: 0.2rem; flex-wrap: wrap; }
     .btn {
       display: inline-flex;
       align-items: center;
@@ -93,59 +141,256 @@
       transition: all 0.25s ease;
       text-decoration: none;
     }
-    .btn-primary { background: #ff69b4; border-color: #ff69b4; color: #0d0d0d; }
-    .btn-primary:hover { background: #ff1493; border-color: #ff1493; transform: scale(1.05); }
+    .btn-primary { background: #ff69b4; border-color: #ff69b4; color: #0d0d0d; box-shadow: 0 0 15px rgba(255,105,180,0.3); }
+    .btn-primary:hover { background: #ff1493; border-color: #ff1493; box-shadow: 0 0 25px rgba(255,20,147,0.5); transform: scale(1.05); }
     .btn-outline { background: transparent; border-color: #5a3a4a; }
-    .btn-outline:hover { border-color: #ffd700; color: #ffd700; }
+    .btn-outline:hover { border-color: #ffd700; color: #ffd700; background: rgba(255,215,0,0.08); }
     .btn-sm { padding: 0.25rem 0.8rem; font-size: 0.75rem; }
+    .btn-whatsapp { background: #25D366; border-color: #25D366; color: #fff; font-weight: 700; box-shadow: 0 0 20px rgba(37,211,102,0.3); }
+    .btn-whatsapp:hover { background: #128C7E; border-color: #128C7E; box-shadow: 0 0 30px rgba(37,211,102,0.5); transform: scale(1.05); }
+    .btn-admin { background: #2a1a22; border-color: #ffd700; color: #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.1); }
+    .btn-admin:hover { background: #3a2a32; border-color: #ff69b4; color: #ff69b4; }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 1.5rem;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-card {
+      background: #1a0a0f;
+      max-width: 460px;
+      width: 100%;
+      padding: 2.5rem 2rem;
+      border-radius: 32px;
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 60px rgba(255,215,0,0.15);
+      text-align: center;
+    }
+    .modal-card h2 { color: #ffd700; border-left: none; margin-bottom: 0.5rem; }
+    .modal-card p { color: #d0b0b0; margin-bottom: 1.5rem; }
+    .modal-card input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border-radius: 40px;
+      background: #2a1a22;
+      border: 1px solid #4a2a3a;
+      color: #f0e0e0;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      outline: none;
+      transition: border 0.3s;
+    }
+    .modal-card input:focus { border-color: #ff69b4; }
+    .modal-card .btn { width: 100%; justify-content: center; padding: 0.8rem; font-size: 1rem; }
+    .modal-card .btn-primary { background: #ffd700; border-color: #ffd700; color: #0d0d0d; }
+    .modal-card .btn-primary:hover { background: #ffed4a; border-color: #ffed4a; box-shadow: 0 0 30px rgba(255,215,0,0.4); }
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 8000;
+      width: 90%;
+      max-width: 500px;
+      pointer-events: none;
+    }
+    .toast {
+      background: rgba(26,10,15,0.95);
+      backdrop-filter: blur(8px);
+      border: 2px solid #ffd700;
+      border-radius: 24px;
+      padding: 1.2rem 1.5rem;
+      color: #f0e6e6;
+      box-shadow: 0 0 40px rgba(255,215,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transform: translateY(120%);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.68,-0.55,0.265,1.55);
+      pointer-events: auto;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-icon { font-size: 2.2rem; flex-shrink: 0; }
+    .toast-content { flex: 1; }
+    .toast-content h4 { color: #ffd700; margin-bottom: 0.2rem; }
+    .toast-content p { color: #d0b0b0; font-size: 0.9rem; margin: 0; }
+    .toast-close { background: none; border: none; color: #6a4a5a; font-size: 1.5rem; cursor: pointer; padding: 0 0.2rem; transition: color 0.2s; }
+    .toast-close:hover { color: #ff69b4; }
+    .services-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; }
+    .service-item {
+      background: rgba(30,15,22,0.6);
+      border-radius: 20px;
+      padding: 1.5rem;
+      border: 1px solid #4a2a3a;
+      flex: 1 1 200px;
+      text-align: center;
+      transition: border-color 0.3s;
+    }
+    .service-item:hover { border-color: #ffd700; }
+    .service-item .icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+    .service-item h3 { color: #ffd700; margin-bottom: 0.3rem; }
+    .service-item p { color: #c0a0a0; font-size: 0.9rem; }
+    .whatsapp-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
+    .admin-panel {
+      margin-top: 1rem;
+      padding: 1.5rem;
+      background: rgba(10,5,8,0.9);
+      border-radius: 24px;
+      border: 1px solid #ffd700;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-box { background: #fff; padding: 1rem; border-radius: 16px; display: inline-block; box-shadow: 0 0 30px rgba(255,215,0,0.15); }
+    .qr-box canvas, .qr-box img { display: block; width: 180px; height: 180px; }
+    .admin-info { display: flex; flex-direction: column; gap: 0.8rem; max-width: 400px; word-break: break-all; }
+    .admin-info .url-box { background: #1a0a0f; padding: 0.6rem 1rem; border-radius: 12px; border: 1px solid #3a1a2a; font-size: 0.85rem; color: #d0b0b0; }
+    .admin-info .btn-group { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .admin-toggle-btn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 7000;
+      background: rgba(26,10,15,0.9);
+      backdrop-filter: blur(4px);
+      border: 1.5px solid #ffd700;
+      color: #ffd700;
+      border-radius: 60px;
+      padding: 0.6rem 1.2rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .admin-toggle-btn:hover { background: #3a2a32; border-color: #ff69b4; color: #ff69b4; transform: scale(1.05); }
     @media (max-width: 768px) {
       body { padding: 0.8rem; }
-      h1 { font-size: 2rem; }
+      h1 { font-size: 2.2rem; }
       .card { padding: 1.2rem 1rem; }
-      .stats-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-      table { font-size: 0.8rem; }
-      th, td { padding: 0.4rem 0.6rem; }
+      .poll-grid { grid-template-columns: 1fr; }
+      .modal-card { padding: 2rem 1.2rem; }
+      .admin-panel { flex-direction: column; align-items: center; }
+      .admin-toggle-btn { bottom: 1rem; right: 1rem; font-size: 0.8rem; padding: 0.4rem 1rem; }
     }
-    @media (max-width: 480px) { .header { flex-direction: column; align-items: flex-start; } }
+    @media (max-width: 480px) {
+      h1 { font-size: 1.8rem; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .user-greeting { font-size: 0.85rem; }
+      .toast { padding: 1rem; flex-wrap: wrap; }
+    }
+    .text-center { text-align: center; }
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1.2rem; }
+    .mt-3 { margin-top: 2rem; }
+    .flex-center { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .gap-1 { gap: 0.5rem; }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <!-- Modal nombre -->
+  <div class="modal-overlay" id="nameModal">
+    <div class="modal-card">
+      <div style="font-size:3rem; margin-bottom:0.5rem;">🎂</div>
+      <h2>¡Bienvenido a la fiesta!</h2>
+      <p>Ingresa tu nombre para participar en la votación y pedir tus canciones favoritas.</p>
+      <input type="text" id="userNameInput" placeholder="Tu nombre..." maxlength="30" autofocus />
+      <button class="btn btn-primary" id="saveNameBtn">✨ Guardar y entrar</button>
+    </div>
+  </div>
+
+  <!-- Contenido principal -->
+  <div class="container" id="mainContent">
+
     <header class="header">
       <div class="header-left">
-        <span class="logo-icon">🎛️</span>
-        <h1 class="neon-text">DJ Panel</h1>
-        <span class="badge">📊 En vivo</span>
+        <span class="logo-icon">🎧</span>
+        <h1 class="neon-text">DJ Michael</h1>
+        <span class="header-badge"><span style="color:#ff69b4;">✦</span> 15 AÑOS</span>
       </div>
-      <div style="display:flex; gap:0.5rem; align-items:center;">
-        <span style="color:#8a6a7a; font-size:0.9rem;">Actualización cada 3s</span>
-        <button class="btn btn-outline btn-sm" id="refreshBtn">🔄 Forzar</button>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+        <span class="user-greeting" id="greetingUser">👤 Hola, invitado</span>
+        <span style="background:#1a0a0f; border:1px solid #ffd700; padding:0.3rem 1rem; border-radius:40px; font-size:0.8rem; color:#ffd700;">🎶 Votación</span>
       </div>
     </header>
 
-    <section class="card">
-      <h2>📈 Conteo por estilo</h2>
-      <div id="statsContainer" class="stats-grid"></div>
+    <section class="card" id="votingSection">
+      <h2><span class="neon-cyan">🎵</span> Elige la música para la fiesta</h2>
+      <p style="color:#d0b0b0; margin-bottom:1.2rem;">Vota por el estilo que más te guste. ¡La música la ponemos todos!</p>
+      <div id="pollContainer" class="poll-grid"></div>
+      <div class="flex-center mt-2" style="justify-content:center; gap:1rem;">
+        <button class="btn btn-outline btn-sm" id="resetAllBtn">🔄 Reiniciar votos (solo local)</button>
+      </div>
     </section>
 
-    <section class="card">
-      <h2>📋 Lista de votos</h2>
-      <div class="refresh-info">
-        <span>Última actualización: <span id="lastUpdate">—</span></span>
-        <span>Total de votos: <span id="totalVotes">0</span></span>
+    <section class="card" id="servicesSection">
+      <h2><span class="neon-cyan">🎤</span> Servicios DJ para tu evento</h2>
+      <p style="color:#d0b0b0; margin-bottom:1.5rem;">
+        ¿Querés que DJ Michael anime tu fiesta de 15, casamiento o evento?
+        Ofrecemos música en vivo, iluminación y la mejor energía.
+      </p>
+      <div class="services-grid">
+        <div class="service-item"><span class="icon">🎚️</span><h3>Equipo Profesional</h3><p>Sonido envolvente, luces LED y pantallas.</p></div>
+        <div class="service-item"><span class="icon">📋</span><h3>Lista personalizada</h3><p>Adaptamos el repertorio a tus gustos.</p></div>
+        <div class="service-item"><span class="icon">📱</span><h3>Interacción en vivo</h3><p>Votación y peticiones desde el celular.</p></div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>#</th><th>Nombre</th><th>Estilo</th><th>Fecha/Hora</th></tr></thead>
-          <tbody id="votesTableBody"><tr><td colspan="4" class="empty-msg">Cargando datos...</td></tr></tbody>
-        </table>
+      <div class="whatsapp-row">
+        <a href="#" id="whatsappLink" target="_blank" class="btn btn-whatsapp" style="font-size:1.1rem; padding:0.8rem 2rem;">💬 Pedir canción por WhatsApp</a>
+        <a href="#" id="whatsappContactLink" target="_blank" class="btn btn-outline" style="font-size:1rem; padding:0.8rem 1.8rem;">📲 Contactar para eventos</a>
+      </div>
+      <p style="color:#8a6a7a; font-size:0.85rem; margin-top:0.8rem; text-align:center;">* Al hacer clic se abrirá WhatsApp con un mensaje predefinido.</p>
+    </section>
+
+    <section class="card" id="adminSection">
+      <h2><span class="neon-cyan">📱</span> Panel DJ — QR y enlace</h2>
+      <div class="admin-panel">
+        <div class="qr-box" id="qrCodeBox"></div>
+        <div class="admin-info">
+          <div class="url-box" id="currentUrlDisplay">Cargando...</div>
+          <div class="btn-group">
+            <button class="btn btn-admin btn-sm" id="copyUrlBtn">📋 Copiar enlace</button>
+            <button class="btn btn-admin btn-sm" id="refreshQrBtn">🔄 Regenerar QR</button>
+          </div>
+          <span style="font-size:0.75rem; color:#8a6a7a;">Escanea el código para acceder desde tu celular</span>
+        </div>
       </div>
     </section>
 
     <div style="text-align:center; color:#6a4a5a; font-size:0.8rem; padding:1rem 0; border-top:1px solid #2a1a22; margin-top:1rem;">
-      <span style="color:#ffb6c1;">DJ Michael — Panel de control</span>
+      <span class="neon-cyan" style="opacity:0.7;">DJ Michael — Celebra tus 15 años con ritmo</span>
     </div>
   </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer">
+    <div class="toast" id="toast">
+      <div class="toast-icon">🎧</div>
+      <div class="toast-content">
+        <h4>¡Voto registrado!</h4>
+        <p>El DJ está analizando la preferencia y pondrá la música cuando lo crea conveniente. ¡Gracias!</p>
+      </div>
+      <button class="toast-close" id="toastClose">✕</button>
+    </div>
+  </div>
+
+  <button class="admin-toggle-btn" id="adminToggleBtn">🔒 Admin</button>
 
   <script>
     (function() {
@@ -155,10 +400,17 @@
       // 1. CONFIGURACIÓN FIREBASE
       // ============================================================
       const FIREBASE_URL = 'https://michael-dj-default-rtdb.europe-west1.firebasedatabase.app/';
-      const VOTOS_PATH = 'votos.json';
+      const VOTOS_PATH = 'votos.json';  // Ruta unificada
 
       // ============================================================
-      // 2. ESTILOS (para mapeo)
+      // 2. WHATSAPP
+      // ============================================================
+      const WHATSAPP_NUMBER = '5491123456789';
+      const WHATSAPP_MESSAGE_SONG = 'Hola DJ Michael, quiero pedir la siguiente canción para la fiesta:';
+      const WHATSAPP_MESSAGE_CONTACT = 'Hola DJ Michael, me interesan tus servicios para un evento. ¿Podemos hablar?';
+
+      // ============================================================
+      // 3. ESTILOS
       // ============================================================
       const STYLES = [
         { id: 'r1', label: '🔥 Reggaeton' },
@@ -176,135 +428,211 @@
       ];
 
       // ============================================================
-      // 3. DOM REFS
+      // 4. ESTADO LOCAL
       // ============================================================
-      const statsContainer = document.getElementById('statsContainer');
-      const votesTableBody = document.getElementById('votesTableBody');
-      const lastUpdateSpan = document.getElementById('lastUpdate');
-      const totalVotesSpan = document.getElementById('totalVotes');
-      const refreshBtn = document.getElementById('refreshBtn');
+      let pollData = STYLES.map(s => ({ id: s.id, label: s.label, votes: 0 }));
 
       // ============================================================
-      // 4. FUNCIONES
+      // 5. DOM REFS
       // ============================================================
-      function fetchVotes() {
-        fetch(FIREBASE_URL + VOTOS_PATH)
-          .then(res => {
-            if (!res.ok) throw new Error('Error en la respuesta');
-            return res.json();
-          })
-          .then(data => {
-            renderData(data);
-            lastUpdateSpan.textContent = new Date().toLocaleTimeString();
-          })
-          .catch(err => {
-            console.error('Error al obtener datos:', err);
-            votesTableBody.innerHTML = `<tr><td colspan="4" class="empty-msg">Error al cargar datos. Verifica conexión.</td></tr>`;
-          });
+      const modal = document.getElementById('nameModal');
+      const userNameInput = document.getElementById('userNameInput');
+      const saveNameBtn = document.getElementById('saveNameBtn');
+      const greetingUser = document.getElementById('greetingUser');
+      const pollContainer = document.getElementById('pollContainer');
+      const resetAllBtn = document.getElementById('resetAllBtn');
+      const whatsappLink = document.getElementById('whatsappLink');
+      const whatsappContactLink = document.getElementById('whatsappContactLink');
+      const toast = document.getElementById('toast');
+      const toastClose = document.getElementById('toastClose');
+      const adminToggleBtn = document.getElementById('adminToggleBtn');
+      const adminSection = document.getElementById('adminSection');
+      const qrBox = document.getElementById('qrCodeBox');
+      const currentUrlDisplay = document.getElementById('currentUrlDisplay');
+      const copyUrlBtn = document.getElementById('copyUrlBtn');
+      const refreshQrBtn = document.getElementById('refreshQrBtn');
+
+      // ============================================================
+      // 6. GESTIÓN DE NOMBRE
+      // ============================================================
+      function getUserName() { return localStorage.getItem('userName') || null; }
+      function setUserName(name) { localStorage.setItem('userName', name); }
+      function showGreeting(name) { greetingUser.textContent = `👤 Hola, ${name}`; }
+      function hideModal() { modal.classList.add('hidden'); }
+
+      function handleNameSubmit() {
+        const name = userNameInput.value.trim();
+        if (!name) { alert('Por favor, ingresá tu nombre.'); return; }
+        setUserName(name);
+        showGreeting(name);
+        hideModal();
+        updateWhatsAppLinks();
       }
 
-      function renderData(data) {
-        // Si data es null o undefined, no hay votos
-        if (!data) {
-          votesTableBody.innerHTML = `<tr><td colspan="4" class="empty-msg">No hay votos registrados aún.</td></tr>`;
-          updateStats({});
-          totalVotesSpan.textContent = '0';
-          return;
-        }
+      const storedName = getUserName();
+      if (storedName) { showGreeting(storedName); hideModal(); }
+      else { modal.classList.remove('hidden'); userNameInput.focus(); }
 
-        // Determinar si los datos son una lista de votos (con pushId) o un objeto de contadores
-        // Si al menos una clave contiene un objeto con 'nombre' y 'estilo', es lista de votos.
-        let isVoteList = false;
-        const keys = Object.keys(data);
-        if (keys.length > 0) {
-          const firstVal = data[keys[0]];
-          if (firstVal && typeof firstVal === 'object' && (firstVal.nombre !== undefined || firstVal.estilo !== undefined)) {
-            isVoteList = true;
-          }
-        }
+      saveNameBtn.addEventListener('click', handleNameSubmit);
+      userNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleNameSubmit(); });
 
-        if (isVoteList) {
-          // === LISTA DE VOTOS INDIVIDUALES ===
-          const entries = Object.entries(data);
-          const votesArray = entries.map(([key, value]) => ({
-            id: key,
-            nombre: value.nombre || 'Anónimo',
-            estilo: value.estilo || 'Desconocido',
-            timestamp: value.timestamp || 0,
-            date: value.timestamp ? new Date(value.timestamp).toLocaleString() : '—'
-          }));
-
-          votesArray.sort((a, b) => b.timestamp - a.timestamp);
-
-          if (votesArray.length === 0) {
-            votesTableBody.innerHTML = `<tr><td colspan="4" class="empty-msg">No hay votos registrados aún.</td></tr>`;
-          } else {
-            let html = '';
-            votesArray.forEach((v, i) => {
-              html += `<tr><td>${i+1}</td><td><strong>${escapeHtml(v.nombre)}</strong></td><td><span class="badge-style">${escapeHtml(v.estilo)}</span></td><td>${v.date}</td></tr>`;
-            });
-            votesTableBody.innerHTML = html;
-          }
-
-          // Calcular estadísticas por estilo
-          const stats = {};
-          votesArray.forEach(v => {
-            const estilo = v.estilo;
-            stats[estilo] = (stats[estilo] || 0) + 1;
-          });
-          updateStats(stats);
-          totalVotesSpan.textContent = votesArray.length;
-        } else {
-          // === OBJETO DE CONTADORES (ej: {cumbia:13, reggaeton:7}) ===
-          // Mostrar mensaje de que no hay nombres
-          votesTableBody.innerHTML = `<tr><td colspan="4" class="empty-msg">Los datos están en formato de contadores (sin nombres). Usa la página de votación para registrar votos individuales.</td></tr>`;
-          // Mostrar contadores en estadísticas
-          const stats = {};
-          STYLES.forEach(style => {
-            const label = style.label;
-            // Buscar en data una clave que coincida (normalizada)
-            const key = label.replace(/[^a-z0-9]/gi, '').toLowerCase();
-            let count = 0;
-            for (const [dbKey, val] of Object.entries(data)) {
-              if (dbKey.toLowerCase() === key || dbKey === label) {
-                count = val;
-                break;
-              }
-            }
-            stats[label] = count;
-          });
-          updateStats(stats);
-          const total = Object.values(data).reduce((a,b) => a + (typeof b === 'number' ? b : 0), 0);
-          totalVotesSpan.textContent = total;
-        }
-      }
-
-      function updateStats(stats) {
+      // ============================================================
+      // 7. VOTACIÓN (RENDER + LÓGICA)
+      // ============================================================
+      function renderPoll() {
+        const totalVotes = pollData.reduce((acc, p) => acc + p.votes, 0);
         let html = '';
-        STYLES.forEach(style => {
-          const count = stats[style.label] || 0;
-          html += `<div class="stat-item"><div class="label">${style.label}</div><div class="count">${count}</div></div>`;
+        pollData.forEach(p => {
+          const percent = totalVotes === 0 ? 0 : Math.round((p.votes / totalVotes) * 100);
+          html += `
+            <div class="poll-item" data-id="${p.id}">
+              <div class="poll-label">
+                <span title="${escapeHtml(p.label)}">${escapeHtml(p.label)}</span>
+                <span class="poll-percent">${percent}% (${p.votes})</span>
+              </div>
+              <div class="poll-bar-bg">
+                <div class="poll-bar-fill" style="width: ${percent}%;"></div>
+              </div>
+              <div class="poll-actions">
+                <button class="btn btn-primary btn-sm vote-btn" data-id="${p.id}">👍 Votar</button>
+                <button class="btn btn-outline btn-sm reset-btn" data-id="${p.id}">↺ Reset</button>
+              </div>
+            </div>
+          `;
         });
-        statsContainer.innerHTML = html;
+        pollContainer.innerHTML = html;
+
+        pollContainer.querySelectorAll('.vote-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            votePoll(id);
+          });
+        });
+        pollContainer.querySelectorAll('.reset-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            resetPollItem(id);
+          });
+        });
       }
 
+      function votePoll(id) {
+        const item = pollData.find(p => p.id === id);
+        if (!item) return;
+        item.votes += 1;
+        renderPoll();
+        showToast();
+
+        // Guardar en Firebase como voto individual
+        const nombre = getUserName() || 'Anónimo';
+        const estilo = item.label;
+        const voto = { nombre, estilo, timestamp: Date.now() };
+
+        fetch(FIREBASE_URL + VOTOS_PATH, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(voto)
+        }).catch(err => console.error('Error al guardar en Firebase:', err));
+      }
+
+      function resetPollItem(id) {
+        const item = pollData.find(p => p.id === id);
+        if (item) { item.votes = 0; renderPoll(); }
+      }
+
+      function resetAllVotes() {
+        if (confirm('¿Reiniciar todos los votos a cero?')) {
+          pollData.forEach(p => p.votes = 0);
+          renderPoll();
+        }
+      }
+
+      // ============================================================
+      // 8. TOAST
+      // ============================================================
+      let toastTimeout = null;
+      function showToast() {
+        toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.remove('show'), 5000);
+      }
+      toastClose.addEventListener('click', () => {
+        toast.classList.remove('show');
+        clearTimeout(toastTimeout);
+      });
+
+      // ============================================================
+      // 9. WHATSAPP
+      // ============================================================
+      function buildWhatsAppUrl(number, message) {
+        return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+      }
+      function updateWhatsAppLinks() {
+        const name = getUserName() || 'Invitado';
+        whatsappLink.href = buildWhatsAppUrl(WHATSAPP_NUMBER, `${WHATSAPP_MESSAGE_SONG} (${name})`);
+        whatsappContactLink.href = buildWhatsAppUrl(WHATSAPP_NUMBER, `${WHATSAPP_MESSAGE_CONTACT} (${name})`);
+      }
+
+      // ============================================================
+      // 10. ADMIN / QR
+      // ============================================================
+      function renderQR() {
+        const url = window.location.href;
+        currentUrlDisplay.textContent = url;
+        qrBox.innerHTML = '';
+        try {
+          new QRCode(qrBox, { text: url, width: 180, height: 180, colorDark: '#0d0d0d', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+        } catch (e) {
+          qrBox.innerHTML = `<p style="color:#ff6e40;">Error al generar QR</p>`;
+        }
+      }
+
+      let adminVisible = false;
+      function toggleAdmin() {
+        adminVisible = !adminVisible;
+        adminSection.classList.toggle('hidden', !adminVisible);
+        adminToggleBtn.textContent = adminVisible ? '🔓 Cerrar Admin' : '🔒 Admin';
+        if (adminVisible) renderQR();
+      }
+
+      // ============================================================
+      // 11. UTILIDADES
+      // ============================================================
       function escapeHtml(text) {
         if (!text) return '';
         const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
         return text.replace(/[&<>"']/g, function(m) { return map[m]; });
       }
 
+      function copyToClipboard(text) {
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(text).then(() => alert('✅ Enlace copiado')).catch(() => fallbackCopy(text));
+        } else { fallbackCopy(text); }
+      }
+      function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); alert('✅ Enlace copiado'); } catch (e) { alert('❌ No se pudo copiar: ' + text); }
+        document.body.removeChild(ta);
+      }
+
       // ============================================================
-      // 5. INICIO Y POLLING
+      // 12. EVENTOS
       // ============================================================
-      fetchVotes();
-      let interval = setInterval(fetchVotes, 3000);
-      refreshBtn.addEventListener('click', () => {
-        fetchVotes();
-        clearInterval(interval);
-        interval = setInterval(fetchVotes, 3000);
-      });
-      console.log('🎛️ Panel DJ conectado a Firebase.');
+      resetAllBtn.addEventListener('click', resetAllVotes);
+      adminToggleBtn.addEventListener('click', toggleAdmin);
+      copyUrlBtn.addEventListener('click', () => copyToClipboard(window.location.href));
+      refreshQrBtn.addEventListener('click', renderQR);
+
+      // ============================================================
+      // 13. INICIO
+      // ============================================================
+      renderPoll();
+      updateWhatsAppLinks();
+      adminSection.classList.add('hidden');
+      console.log('🎂 Página de votación (Firebase)');
     })();
   </script>
 </body>

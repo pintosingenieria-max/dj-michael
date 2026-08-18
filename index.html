@@ -40,7 +40,17 @@
       margin-bottom: 2.5rem;
     }
     .header-left { display: flex; align-items: center; gap: 0.75rem; }
-    .logo-icon { font-size: 2.8rem; line-height: 1; }
+    
+    /* --- LOGO PERSONALIZADO --- */
+    .header-logo { 
+      height: 3.2rem; 
+      width: auto; 
+      object-fit: contain; 
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      padding: 4px;
+    }
+    
     .header-badge {
       background: #1a0a0f;
       padding: 0.4rem 1.2rem;
@@ -72,6 +82,66 @@
       transition: opacity 0.3s, transform 0.3s;
     }
     .card-hidden { display: none; }
+    
+    /* --- FLYER CATÁLOGO --- */
+    .flyer-container {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #4a2a3a;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .flyer-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* --- BOTÓN WHATSAPP DESTACADO --- */
+    .whatsapp-highlight {
+      display: flex;
+      justify-content: center;
+      margin: 1.5rem 0 1rem 0;
+      width: 100%;
+    }
+    .btn-whatsapp-large {
+      background: #25D366;
+      color: #fff;
+      padding: 1.2rem 2.5rem;
+      font-size: 1.5rem;
+      font-weight: 800;
+      border-radius: 60px;
+      box-shadow: 0 0 30px rgba(37, 211, 102, 0.5);
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      animation: pulse-whatsapp 2s infinite;
+    }
+    .btn-whatsapp-large:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 50px rgba(37, 211, 102, 0.7);
+    }
+    @keyframes pulse-whatsapp {
+      0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5); }
+      70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+    }
+    @media (max-width: 600px) {
+      .btn-whatsapp-large { 
+        font-size: 1.2rem; 
+        padding: 1rem 1.5rem; 
+        width: 100%; 
+        justify-content: center; 
+        white-space: normal;
+        text-align: center;
+      }
+    }
+
     .poll-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
@@ -146,8 +216,6 @@
     .btn-outline { background: transparent; border-color: #5a3a4a; }
     .btn-outline:hover { border-color: #ffd700; color: #ffd700; background: rgba(255,215,0,0.08); }
     .btn-sm { padding: 0.25rem 0.8rem; font-size: 0.75rem; }
-    .btn-whatsapp { background: #25D366; border-color: #25D366; color: #fff; font-weight: 700; box-shadow: 0 0 20px rgba(37,211,102,0.3); }
-    .btn-whatsapp:hover { background: #128C7E; border-color: #128C7E; box-shadow: 0 0 30px rgba(37,211,102,0.5); transform: scale(1.05); }
     .btn-admin { background: #2a1a22; border-color: #ffd700; color: #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.1); }
     .btn-admin:hover { background: #3a2a32; border-color: #ff69b4; color: #ff69b4; }
     .modal-overlay {
@@ -226,6 +294,7 @@
     .toast-content p { color: #d0b0b0; font-size: 0.9rem; margin: 0; }
     .toast-close { background: none; border: none; color: #6a4a5a; font-size: 1.5rem; cursor: pointer; padding: 0 0.2rem; transition: color 0.2s; }
     .toast-close:hover { color: #ff69b4; }
+    
     .services-grid { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; }
     .service-item {
       background: rgba(30,15,22,0.6);
@@ -240,7 +309,7 @@
     .service-item .icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
     .service-item h3 { color: #ffd700; margin-bottom: 0.3rem; }
     .service-item p { color: #c0a0a0; font-size: 0.9rem; }
-    .whatsapp-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
+    
     .admin-panel {
       margin-top: 1rem;
       padding: 1.5rem;
@@ -279,9 +348,11 @@
       gap: 0.4rem;
     }
     .admin-toggle-btn:hover { background: #3a2a32; border-color: #ff69b4; color: #ff69b4; transform: scale(1.05); }
+    
     @media (max-width: 768px) {
       body { padding: 0.8rem; }
       h1 { font-size: 2.2rem; }
+      .header-logo { height: 2.8rem; }
       .card { padding: 1.2rem 1rem; }
       .poll-grid { grid-template-columns: 1fr; }
       .modal-card { padding: 2rem 1.2rem; }
@@ -321,7 +392,8 @@
 
     <header class="header">
       <div class="header-left">
-        <span class="logo-icon">🎧</span>
+        <!-- LOGO PRINCIPAL DE DJ MICHAEL -->
+        <img src="https://raw.githubusercontent.com/pintosingenieria-max/dj-michael/main/principal.png" alt="DJ Michael Logo" class="header-logo" />
         <h1 class="neon-text">DJ Michael</h1>
         <span class="header-badge"><span style="color:#ff69b4;">✦</span> 15 AÑOS</span>
       </div>
@@ -342,20 +414,33 @@
 
     <section class="card" id="servicesSection">
       <h2><span class="neon-cyan">🎤</span> Servicios DJ para tu evento</h2>
-      <p style="color:#d0b0b0; margin-bottom:1.5rem;">
+      <p style="color:#d0b0b0; margin-bottom:0.5rem;">
         ¿Querés que DJ Michael anime tu fiesta de 15, casamiento o evento?
         Ofrecemos música en vivo, iluminación y la mejor energía.
       </p>
+      
+      <!-- BOTÓN WHATSAPP DESTACADO (COLOCADO ARRIBA DEL FLYER) -->
+      <div class="whatsapp-highlight">
+        <a href="#" id="whatsappLink" target="_blank" class="btn-whatsapp-large">
+            📲 ¡Pide tu música al DJ por WhatsApp!
+        </a>
+      </div>
+
+      <!-- CATÁLOGO FLYER -->
+      <div class="flyer-container">
+        <img src="https://raw.githubusercontent.com/pintosingenieria-max/dj-michael/main/dj.michael.jpg" alt="Flyer DJ Michael" />
+      </div>
+
       <div class="services-grid">
         <div class="service-item"><span class="icon">🎚️</span><h3>Equipo Profesional</h3><p>Sonido envolvente, luces LED y pantallas.</p></div>
         <div class="service-item"><span class="icon">📋</span><h3>Lista personalizada</h3><p>Adaptamos el repertorio a tus gustos.</p></div>
         <div class="service-item"><span class="icon">📱</span><h3>Interacción en vivo</h3><p>Votación y peticiones desde el celular.</p></div>
       </div>
-      <div class="whatsapp-row">
-        <a href="#" id="whatsappLink" target="_blank" class="btn btn-whatsapp" style="font-size:1.1rem; padding:0.8rem 2rem;">💬 Pedir canción por WhatsApp</a>
+
+      <!-- Botón secundario para eventos -->
+      <div style="display:flex; justify-content:center; margin-top: 1.5rem;">
         <a href="#" id="whatsappContactLink" target="_blank" class="btn btn-outline" style="font-size:1rem; padding:0.8rem 1.8rem;">📲 Contactar para eventos</a>
       </div>
-      <p style="color:#8a6a7a; font-size:0.85rem; margin-top:0.8rem; text-align:center;">* Al hacer clic se abrirá WhatsApp con un mensaje predefinido.</p>
     </section>
 
     <section class="card" id="adminSection">
@@ -403,10 +488,10 @@
       const VOTOS_PATH = 'votos.json';  // Ruta unificada
 
       // ============================================================
-      // 2. WHATSAPP
+      // 2. WHATSAPP (NÚMERO ACTUALIZADO CON CÓDIGO DE PAÍS)
       // ============================================================
-      const WHATSAPP_NUMBER = '5491123456789';
-      const WHATSAPP_MESSAGE_SONG = 'Hola DJ Michael, quiero pedir la siguiente canción para la fiesta:';
+      const WHATSAPP_NUMBER = '595992311266'; // Tu número en formato internacional (sin el 0 inicial)
+      const WHATSAPP_MESSAGE_SONG = 'Hola DJ Michael, soy '; 
       const WHATSAPP_MESSAGE_CONTACT = 'Hola DJ Michael, me interesan tus servicios para un evento. ¿Podemos hablar?';
 
       // ============================================================
@@ -466,7 +551,7 @@
         setUserName(name);
         showGreeting(name);
         hideModal();
-        updateWhatsAppLinks();
+        updateWhatsAppLinks(); // Se actualiza el enlace con el nombre nuevo
       }
 
       const storedName = getUserName();
@@ -562,14 +647,18 @@
       });
 
       // ============================================================
-      // 9. WHATSAPP
+      // 9. WHATSAPP (ACTUALIZACIÓN DE ENLACES)
       // ============================================================
       function buildWhatsAppUrl(number, message) {
         return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
       }
       function updateWhatsAppLinks() {
         const name = getUserName() || 'Invitado';
-        whatsappLink.href = buildWhatsAppUrl(WHATSAPP_NUMBER, `${WHATSAPP_MESSAGE_SONG} (${name})`);
+        
+        // Mensaje con el nombre de la persona para que el DJ sepa quién es
+        const messageForDJ = `${WHATSAPP_MESSAGE_SONG}${name}. Quiero pedir la siguiente canción para la fiesta:`;
+        
+        whatsappLink.href = buildWhatsAppUrl(WHATSAPP_NUMBER, messageForDJ);
         whatsappContactLink.href = buildWhatsAppUrl(WHATSAPP_NUMBER, `${WHATSAPP_MESSAGE_CONTACT} (${name})`);
       }
 

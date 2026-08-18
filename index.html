@@ -250,20 +250,25 @@
       box-shadow: 0 0 20px rgba(255,105,180,0.2);
       font-weight: 800;
     }
-    .btn-primary:hover { 
+    .btn-primary:hover:not(:disabled) { 
       background: #ff1493; 
       border-color: #ff1493; 
       box-shadow: 0 0 30px rgba(255,20,147,0.5); 
       transform: scale(1.05);
     }
-    .btn-primary:active { transform: scale(0.95); }
+    .btn-primary:active:not(:disabled) { transform: scale(0.95); }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
     .btn-outline { background: transparent; border-color: #5a3a4a; }
     .btn-outline:hover { border-color: #ffd700; color: #ffd700; background: rgba(255,215,0,0.08); }
     .btn-sm { padding: 0.3rem 1rem; font-size: 0.8rem; }
     .btn-admin { background: #2a1a22; border-color: #ffd700; color: #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.1); }
     .btn-admin:hover { background: #3a2a32; border-color: #ff69b4; color: #ff69b4; }
 
-    /* ===== MODAL CON LOGO ===== */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -501,9 +506,7 @@
       <h2><span class="neon-cyan">🎵</span> Elige la música para la fiesta</h2>
       <p style="color:#c8b8b8; margin-bottom:1.2rem;">Vota por el estilo que más te guste. ¡La música la ponemos todos!</p>
       <div id="pollContainer" class="poll-grid"></div>
-      <div class="flex-center mt-2" style="justify-content:center; gap:1rem;">
-        <button class="btn btn-outline btn-sm" id="resetAllBtn">🔄 Reiniciar votos</button>
-      </div>
+      <!-- Ya no hay botón de reinicio aquí -->
     </section>
 
     <section class="card" id="servicesSection">
@@ -537,6 +540,8 @@
           <div class="btn-group">
             <button class="btn btn-admin btn-sm" id="copyUrlBtn">📋 Copiar enlace</button>
             <button class="btn btn-admin btn-sm" id="refreshQrBtn">🔄 Regenerar QR</button>
+            <!-- Botón de reinicio solo para admin -->
+            <button class="btn btn-admin btn-sm" id="resetAllBtnAdmin">🔄 Reiniciar todos los votos</button>
           </div>
           <span style="font-size:0.75rem; color:#8a6a7a;">Escanea el código para acceder desde tu celular</span>
         </div>
@@ -763,6 +768,8 @@
       // ============================================================
       let pollData = STYLES.map(s => ({ id: s.id, label: s.label, votes: 0 }));
       let userVotes = {};
+      let adminVisible = false;
+      let cooldownInterval = null;
 
       // ============================================================
       // 5. DOM REFS
@@ -772,7 +779,7 @@
       const saveNameBtn = document.getElementById('saveNameBtn');
       const greetingUser = document.getElementById('greetingUser');
       const pollContainer = document.getElementById('pollContainer');
-      const resetAllBtn = document.getElementById('resetAllBtn');
+      const resetAllBtnAdmin = document.getElementById('resetAllBtnAdmin');
       const whatsappLink = document.getElementById('whatsappLink');
       const whatsappContactLink = document.getElementById('whatsappContactLink');
       const toast = document.getElementById('toast');
@@ -792,19 +799,14 @@
       function showGreeting(name) { greetingUser.textContent = `👤 Hola, ${name}`; }
       function hideModal() { modal.classList.add('hidden'); }
 
-      // Precargar el nombre si ya existe
       const storedName = getUserName();
       if (storedName) {
         userNameInput.value = storedName;
-        // Mostramos el saludo de inmediato, pero el modal sigue visible
         showGreeting(storedName);
       } else {
-        // Si no hay nombre, el saludo sigue siendo "invitado"
         greetingUser.textContent = '👤 Hola, invitado';
       }
 
-      // El modal siempre está visible al cargar (no se oculta automáticamente)
-      // Lo forzamos a estar visible (por si acaso)
       modal.classList.remove('hidden');
 
       function handleNameSubmit() {
@@ -817,22 +819,73 @@
         showGreeting(name);
         hideModal();
         updateWhatsAppLinks();
-        // Enfocar el contenido principal (opcional)
       }
 
       saveNameBtn.addEventListener('click', handleNameSubmit);
       userNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleNameSubmit(); });
 
       // ============================================================
-      // 7. VOTACIÓN
+      // 7. COOLDOWN (1 minuto)
+      // ============================================================
+      const COOLDOWN_SECONDS = 60;
+
+      function getLastVoteTime() {
+        const val = localStorage.getItem('lastVoteTimestamp');
+        return val ? parseInt(val) : 0;
+      }
+
+      function setLastVoteTime() {
+        localStorage.setItem('lastVoteTimestamp', Date.now());
+      }
+
+      function clearLastVoteTime() {
+        localStorage.removeItem('lastVoteTimestamp');
+      }
+
+      function isInCooldown() {
+        const last = getLastVoteTime();
+        if (!last) return false;
+        const elapsed = (Date.now() - last) / 1000;
+        return elapsed < COOLDOWN_SECONDS;
+      }
+
+      function getRemainingCooldown() {
+        const last = getLastVoteTime();
+        if (!last) return 0;
+        const elapsed = (Date.now() - last) / 1000;
+        return Math.max(0, COOLDOWN_SECONDS - elapsed);
+      }
+
+      // ============================================================
+      // 8. VOTACIÓN
       // ============================================================
       function renderPoll() {
         const totalVotes = pollData.reduce((acc, p) => acc + p.votes, 0);
+        const inCooldown = isInCooldown();
+        const remaining = getRemainingCooldown();
+
         let html = '';
         const sorted = [...pollData].sort((a, b) => b.votes - a.votes);
         sorted.forEach(p => {
           const percent = totalVotes === 0 ? 0 : Math.round((p.votes / totalVotes) * 100);
           const voted = userVotes[p.id] || false;
+          // Determinar estado del botón de votar
+          let disabled = false;
+          let btnText = '';
+          if (voted) {
+            disabled = true;
+            btnText = '✅ Votado';
+          } else if (inCooldown) {
+            disabled = true;
+            btnText = `⏳ ${Math.ceil(remaining)}s`;
+          } else {
+            disabled = false;
+            btnText = '👍 Votar';
+          }
+
+          // Botón de reset solo visible en modo admin
+          const resetBtnHtml = adminVisible ? `<button class="btn btn-outline btn-sm reset-btn" data-id="${p.id}">↺ Reset</button>` : '';
+
           html += `
             <div class="poll-item" data-id="${p.id}">
               <div class="poll-label">
@@ -843,27 +896,58 @@
                 <div class="poll-bar-fill" style="width: ${percent}%;"></div>
               </div>
               <div class="poll-actions">
-                <button class="btn btn-primary btn-sm vote-btn" data-id="${p.id}" ${voted ? 'disabled' : ''}>
-                  ${voted ? '✅ Votado' : '👍 Votar'}
+                <button class="btn btn-primary btn-sm vote-btn ${voted ? '' : 'vote-available'}" data-id="${p.id}" ${disabled ? 'disabled' : ''}>
+                  ${btnText}
                 </button>
-                <button class="btn btn-outline btn-sm reset-btn" data-id="${p.id}">↺ Reset</button>
+                ${resetBtnHtml}
               </div>
             </div>
           `;
         });
         pollContainer.innerHTML = html;
 
-        pollContainer.querySelectorAll('.vote-btn').forEach(btn => {
+        // Eventos de votar
+        pollContainer.querySelectorAll('.vote-btn:not([disabled])').forEach(btn => {
           btn.addEventListener('click', () => {
             const id = btn.dataset.id;
             votePoll(id);
           });
         });
-        pollContainer.querySelectorAll('.reset-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            resetPollItem(id);
+
+        // Eventos de reset (solo admin)
+        if (adminVisible) {
+          pollContainer.querySelectorAll('.reset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.dataset.id;
+              resetPollItem(id);
+            });
           });
+        }
+      }
+
+      // Actualizar cronómetro en los botones disponibles
+      function updateCooldownButtons() {
+        const inCooldown = isInCooldown();
+        const remaining = getRemainingCooldown();
+        const voteAvailable = document.querySelectorAll('.vote-available');
+
+        if (!inCooldown) {
+          // Si ya pasó el cooldown, limpiamos el timestamp y habilitamos todos los botones disponibles
+          if (getLastVoteTime() !== 0) {
+            clearLastVoteTime();
+          }
+          voteAvailable.forEach(btn => {
+            btn.disabled = false;
+            btn.textContent = '👍 Votar';
+          });
+          return;
+        }
+
+        // En cooldown: deshabilitar y mostrar tiempo
+        const seconds = Math.ceil(remaining);
+        voteAvailable.forEach(btn => {
+          btn.disabled = true;
+          btn.textContent = `⏳ ${seconds}s`;
         });
       }
 
@@ -888,16 +972,26 @@
       }
 
       function votePoll(id) {
+        // Verificar cooldown
+        if (isInCooldown()) {
+          const remaining = Math.ceil(getRemainingCooldown());
+          showToast('⏳', 'Espera un momento', `Debes esperar ${remaining} segundos antes de votar de nuevo.`);
+          return;
+        }
+
         const item = pollData.find(p => p.id === id);
         if (!item) return;
         if (userVotes[id]) {
           showToast('⚠️', 'Ya votaste', 'Solo puedes votar una vez por estilo.');
           return;
         }
+
+        // Registrar voto
         item.votes += 1;
         userVotes[id] = true;
+        setLastVoteTime(); // Iniciar cooldown
         renderPoll();
-        showToast('🎧', '¡Voto registrado!', 'El DJ analizará la preferencia.');
+        showToast('🎧', '¡Voto registrado!', 'El DJ analizará la preferencia. Espera 1 minuto para volver a votar.');
 
         const nombre = getUserName() || 'Anónimo';
         const estilo = item.label;
@@ -928,7 +1022,7 @@
       }
 
       // ============================================================
-      // 8. TOAST
+      // 9. TOAST
       // ============================================================
       let toastTimeout = null;
       function showToast(icon, title, message) {
@@ -948,7 +1042,7 @@
       });
 
       // ============================================================
-      // 9. WHATSAPP
+      // 10. WHATSAPP
       // ============================================================
       function buildWhatsAppUrl(number, message) {
         return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
@@ -961,7 +1055,7 @@
       }
 
       // ============================================================
-      // 10. ADMIN / QR
+      // 11. ADMIN / QR
       // ============================================================
       function renderQR() {
         const url = window.location.href;
@@ -974,16 +1068,20 @@
         }
       }
 
-      let adminVisible = false;
       function toggleAdmin() {
         adminVisible = !adminVisible;
         adminSection.classList.toggle('hidden', !adminVisible);
         adminToggleBtn.textContent = adminVisible ? '🔓 Cerrar Admin' : '🔒 Admin';
-        if (adminVisible) renderQR();
+        if (adminVisible) {
+          renderQR();
+          renderPoll(); // Mostrar botones de reset
+        } else {
+          renderPoll(); // Ocultar botones de reset
+        }
       }
 
       // ============================================================
-      // 11. UTILIDADES
+      // 12. UTILIDADES
       // ============================================================
       function escapeHtml(text) {
         if (!text) return '';
@@ -1006,20 +1104,24 @@
       }
 
       // ============================================================
-      // 12. EVENTOS
+      // 13. EVENTOS
       // ============================================================
-      resetAllBtn.addEventListener('click', resetAllVotes);
+      resetAllBtnAdmin.addEventListener('click', resetAllVotes);
       adminToggleBtn.addEventListener('click', toggleAdmin);
       copyUrlBtn.addEventListener('click', () => copyToClipboard(window.location.href));
       refreshQrBtn.addEventListener('click', renderQR);
 
       // ============================================================
-      // 13. INICIO
+      // 14. INICIO
       // ============================================================
       loadVotesFromFirebase();
       updateWhatsAppLinks();
       adminSection.classList.add('hidden');
-      console.log('🎂 Página de votación con modal siempre visible y logo');
+
+      // Iniciar el intervalo del cronómetro (cada segundo)
+      cooldownInterval = setInterval(updateCooldownButtons, 1000);
+
+      console.log('🎂 Página de votación con cooldown de 1 minuto y botones de reset solo para admin');
     })();
   </script>
 </body>

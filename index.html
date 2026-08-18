@@ -3,11 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-  <title>DJ Michael – 15 años | Votación</title>
+  <title>DJ Michael – 15 años | Votación en Vivo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
-  <!-- QRCode.js desde CDN -->
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- QRCode.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     /* ===== RESET & BASE ===== */
@@ -772,9 +775,30 @@
       'use strict';
 
       // ============================================================
-      // 1. CONFIGURACIÓN DE WHATSAPP (cambiar número y mensajes)
+      // 0. CONFIGURACIÓN DE FIREBASE
       // ============================================================
-      const WHATSAPP_NUMBER = '5491123456789'; // Reemplazar con número real (sin +)
+      const firebaseConfig = {
+        // Importante: Necesitas agregar las credenciales completas
+        // Puedes obtenerlas desde la consola de Firebase > Configuración del proyecto
+        // Por ahora usamos solo la URL de la base de datos
+        databaseURL: "https://michael-dj-default-rtdb.europe-west1.firebasedatabase.app/"
+      };
+
+      // Inicializar Firebase
+      try {
+        firebase.initializeApp(firebaseConfig);
+        console.log('✅ Firebase inicializado correctamente');
+      } catch (error) {
+        console.error('❌ Error al inicializar Firebase:', error);
+        alert('Error al conectar con la base de datos. Verifica tu conexión a internet.');
+      }
+
+      const database = firebase.database();
+
+      // ============================================================
+      // 1. CONFIGURACIÓN DE WHATSAPP
+      // ============================================================
+      const WHATSAPP_NUMBER = '5491123456789';
       const WHATSAPP_MESSAGE_SONG = 'Hola DJ Michael, quiero pedir la siguiente canción para la fiesta:';
       const WHATSAPP_MESSAGE_CONTACT = 'Hola DJ Michael, me interesan tus servicios para un evento. ¿Podemos hablar?';
 
@@ -782,30 +806,26 @@
       // 2. ESTILOS (12 categorías)
       // ============================================================
       const STYLES = [
-        { id: 'r1', label: '🔥 Reggaeton' },
-        { id: 'r2', label: '🎶 Cumbia' },
-        { id: 'r3', label: '💃 Funk' },
-        { id: 'r4', label: '🇧🇷 Sertanejo' },
-        { id: 'r5', label: '🎛️ Remixes / Electrónica' },
-        { id: 'r6', label: '🕺 Retro / Pop' },
-        { id: 'r7', label: '🎺 Banda / Grupera' },
-        { id: 'r8', label: '🌴 Vallenato' },
-        { id: 'r9', label: '💔 Baladas / Villeras' },
-        { id: 'r10', label: '🎤 Pop Latino' },
-        { id: 'r11', label: '🎧 Urbano / Trap' },
-        { id: 'r12', label: '🎹 Clásicos 80/90' }
+        { id: 'reggaeton', label: '🔥 Reggaeton' },
+        { id: 'cumbia', label: '🎶 Cumbia' },
+        { id: 'funk', label: '💃 Funk' },
+        { id: 'sertanejo', label: '🇧🇷 Sertanejo' },
+        { id: 'remixes', label: '🎛️ Remixes / Electrónica' },
+        { id: 'retro', label: '🕺 Retro / Pop' },
+        { id: 'banda', label: '🎺 Banda / Grupera' },
+        { id: 'vallenato', label: '🌴 Vallenato' },
+        { id: 'baladas', label: '💔 Baladas / Villeras' },
+        { id: 'poplatino', label: '🎤 Pop Latino' },
+        { id: 'urbano', label: '🎧 Urbano / Trap' },
+        { id: 'clasicos', label: '🎹 Clásicos 80/90' }
       ];
 
       // ============================================================
-      // 3. ESTADO
+      // 3. ESTADO LOCAL
       // ============================================================
-      let pollData = STYLES.map(s => ({
-        id: s.id,
-        label: s.label,
-        votes: 0
-      }));
-
+      let pollData = []; // Se llenará desde Firebase
       let adminVisible = false;
+      let isVoting = false; // Para evitar votos duplicados mientras se actualiza
 
       // ============================================================
       // 4. REFERENCIAS DOM
@@ -877,7 +897,109 @@
       });
 
       // ============================================================
-      // 6. VOTACIÓN (RENDER Y LÓGICA)
+      // 6. FUNCIONES DE FIREBASE
+      // ============================================================
+
+      // Leer datos de Firebase y actualizar la interfaz
+      function loadVotesFromFirebase() {
+        const votesRef = database.ref('votes');
+        votesRef.on('value', (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            // Actualizar pollData con los datos de Firebase
+            STYLES.forEach(style => {
+              const existing = pollData.find(p => p.id === style.id);
+              if (existing) {
+                existing.votes = data[style.id] || 0;
+              } else {
+                pollData.push({
+                  id: style.id,
+                  label: style.label,
+                  votes: data[style.id] || 0
+                });
+              }
+            });
+            // Si algún estilo no está en pollData, agregarlo
+            STYLES.forEach(style => {
+              if (!pollData.find(p => p.id === style.id)) {
+                pollData.push({
+                  id: style.id,
+                  label: style.label,
+                  votes: 0
+                });
+              }
+            });
+            renderPoll();
+          } else {
+            // Si no hay datos, inicializar con ceros
+            pollData = STYLES.map(s => ({
+              id: s.id,
+              label: s.label,
+              votes: 0
+            }));
+            // Guardar en Firebase para inicializar
+            saveVotesToFirebase();
+            renderPoll();
+          }
+        }, (error) => {
+          console.error('Error al leer datos de Firebase:', error);
+          alert('Error al conectar con la base de datos. Verifica tu conexión.');
+        });
+      }
+
+      // Guardar todos los votos en Firebase
+      function saveVotesToFirebase() {
+        const votesRef = database.ref('votes');
+        const data = {};
+        pollData.forEach(p => {
+          data[p.id] = p.votes;
+        });
+        votesRef.set(data).then(() => {
+          console.log('✅ Votos guardados en Firebase');
+        }).catch((error) => {
+          console.error('❌ Error al guardar votos:', error);
+        });
+      }
+
+      // Incrementar un voto en Firebase
+      function incrementVoteInFirebase(id) {
+        if (isVoting) return;
+        isVoting = true;
+
+        const voteRef = database.ref('votes/' + id);
+        voteRef.transaction((currentValue) => {
+          // Si el valor actual es null o undefined, comenzar desde 0
+          return (currentValue || 0) + 1;
+        }, (error, committed, snapshot) => {
+          isVoting = false;
+          if (error) {
+            console.error('Error al incrementar voto:', error);
+            alert('Error al votar. Intenta nuevamente.');
+          } else if (committed) {
+            // La notificación se mostrará en el listener de 'value'
+            showToast();
+          }
+        });
+      }
+
+      // Reiniciar todos los votos en Firebase
+      function resetAllVotesInFirebase() {
+        if (!confirm('¿Reiniciar todos los votos a cero?')) return;
+
+        const updates = {};
+        STYLES.forEach(style => {
+          updates[style.id] = 0;
+        });
+        database.ref('votes').update(updates).then(() => {
+          console.log('✅ Votos reiniciados');
+        }).catch((error) => {
+          console.error('❌ Error al reiniciar votos:', error);
+          alert('Error al reiniciar los votos.');
+        });
+      }
+
+      // ============================================================
+      // 7. RENDERIZADO DE LA VOTACIÓN
       // ============================================================
       function renderPoll() {
         const totalVotes = pollData.reduce((acc, p) => acc + p.votes, 0);
@@ -903,48 +1025,45 @@
         });
         pollContainer.innerHTML = html;
 
-        // Event listeners
+        // Event listeners para votar y resetear individual
         pollContainer.querySelectorAll('.vote-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const id = btn.dataset.id;
-            votePoll(id);
+            handleVote(id);
           });
         });
 
         pollContainer.querySelectorAll('.reset-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const id = btn.dataset.id;
-            resetPollItem(id);
+            resetSingleVoteInFirebase(id);
           });
         });
       }
 
-      function votePoll(id) {
-        const item = pollData.find(p => p.id === id);
-        if (item) {
-          item.votes += 1;
-          renderPoll();
-          showToast(); // Mostrar notificación al votar
-        }
+      // ============================================================
+      // 8. MANEJADORES DE VOTOS
+      // ============================================================
+
+      function handleVote(id) {
+        if (isVoting) return;
+        incrementVoteInFirebase(id);
       }
 
-      function resetPollItem(id) {
-        const item = pollData.find(p => p.id === id);
-        if (item) {
-          item.votes = 0;
-          renderPoll();
-        }
-      }
-
-      function resetAllVotes() {
-        if (confirm('¿Reiniciar todos los votos a cero?')) {
-          pollData.forEach(p => p.votes = 0);
-          renderPoll();
-        }
+      function resetSingleVoteInFirebase(id) {
+        if (!confirm(`¿Reiniciar los votos de "${pollData.find(p => p.id === id)?.label || id}" a cero?`)) return;
+        const updates = {};
+        updates[id] = 0;
+        database.ref('votes').update(updates).then(() => {
+          console.log(`✅ Votos de ${id} reiniciados`);
+        }).catch((error) => {
+          console.error('❌ Error al reiniciar voto:', error);
+          alert('Error al reiniciar el voto.');
+        });
       }
 
       // ============================================================
-      // 7. TOAST NOTIFICACIÓN
+      // 9. TOAST NOTIFICACIÓN
       // ============================================================
       let toastTimeout = null;
 
@@ -962,7 +1081,7 @@
       });
 
       // ============================================================
-      // 8. WHATSAPP ENLACES
+      // 10. WHATSAPP ENLACES
       // ============================================================
       function buildWhatsAppUrl(number, message) {
         return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
@@ -978,7 +1097,7 @@
       }
 
       // ============================================================
-      // 9. ADMIN / QR
+      // 11. ADMIN / QR
       // ============================================================
       function renderQR() {
         const url = window.location.href;
@@ -1008,7 +1127,7 @@
       }
 
       // ============================================================
-      // 10. UTILIDADES
+      // 12. UTILIDADES
       // ============================================================
       function escapeHtml(text) {
         if (!text) return '';
@@ -1049,9 +1168,9 @@
       }
 
       // ============================================================
-      // 11. EVENT LISTENERS ADICIONALES
+      // 13. EVENT LISTENERS ADICIONALES
       // ============================================================
-      resetAllBtn.addEventListener('click', resetAllVotes);
+      resetAllBtn.addEventListener('click', resetAllVotesInFirebase);
       adminToggleBtn.addEventListener('click', toggleAdmin);
       copyUrlBtn.addEventListener('click', () => {
         copyToClipboard(window.location.href);
@@ -1059,24 +1178,34 @@
       refreshQrBtn.addEventListener('click', renderQR);
 
       // ============================================================
-      // 12. INICIALIZACIÓN
+      // 14. INICIALIZACIÓN
       // ============================================================
-      renderPoll();
+      // Cargar datos de Firebase
+      loadVotesFromFirebase();
+
+      // Actualizar enlaces de WhatsApp
       updateWhatsAppLinks();
+
       // Admin oculto por defecto
       adminSection.classList.add('hidden');
 
-      // Si el nombre cambia, actualizar WhatsApp
-      // (ya está cubierto en handleNameSubmit)
-
-      // (Opcional) algunos votos de ejemplo
-      // pollData[0].votes = 5;
-      // pollData[1].votes = 3;
-      // pollData[2].votes = 8;
-      // renderPoll();
-
-      console.log('🎂 Página lista para la fiesta de 15 años');
+      console.log('🎂 Página lista con Firebase Realtime Database');
       console.log('🔗 URL actual:', window.location.href);
+      console.log('📊 Base de datos:', firebaseConfig.databaseURL);
+
+      // ============================================================
+      // 15. MANEJO DE ERRORES DE CONEXIÓN
+      // ============================================================
+      // Si falla la conexión a Firebase, mostrar un mensaje
+      const connectedRef = database.ref('.info/connected');
+      connectedRef.on('value', (snap) => {
+        if (snap.val() === true) {
+          console.log('✅ Conectado a Firebase');
+        } else {
+          console.warn('⚠️ Desconectado de Firebase. Los datos no se sincronizarán.');
+        }
+      });
+
     })();
   </script>
 </body>
